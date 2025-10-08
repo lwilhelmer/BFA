@@ -1,51 +1,29 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Living Web Archive</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <header>
       <h1>The Living Web Archive</h1>
-      <p>
-        An evolving self-portrait built from digital traces — revealing how
-        data, identity, and surveillance intertwine.
-      </p>
+      <p>An evolving self-portrait built from digital traces — revealing how data, identity, and surveillance intertwine.</p>
     </header>
 
-    <main class="archive">
-      <div class="fragment">
-        <img
-          id="selfPortrait"
-          src="https://picsum.photos/400/250?random=1"
-          alt="self-portrait"
-        />
-        <div class="caption">Type something to change the portrait:</div>
-        <input
-          type="text"
-          id="userInput"
-          placeholder="Enter search term, memory, or phrase..."
-        />
+    <main>
+      <div class="portrait-container">
+        <canvas id="portrait-canvas"></canvas>
+        <div id="image-layer"></div>
+        <div class="input-box">
+          <input id="user-input" type="text" placeholder="Type something..." />
+        </div>
       </div>
     </main>
 
     <footer>© 2025 Lea Corini — Interactive BFA Project</footer>
 
-    <script>
-      const input = document.getElementById("userInput");
-      const portrait = document.getElementById("selfPortrait");
-
-      input.addEventListener("input", () => {
-        const query = encodeURIComponent(input.value.trim());
-        if (query.length > 0) {
-          portrait.src = `https://picsum.photos/400/250?random=${Math.floor(
-            Math.random() * 1000
-          )}&q=${query}`;
-        }
-      });
-    </script>
+    <script src="js/livingPortrait.js"></script>
   </body>
 </html>
