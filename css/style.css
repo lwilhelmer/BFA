@@ -1,0 +1,75 @@
+body {
+  overflow-x: hidden;
+}
+
+header {
+  text-align: center;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid #222;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  letter-spacing: 1px;
+  color: #00ffc3;
+}
+
+header p {
+  max-width: 700px;
+  margin: 1rem auto 0;
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+.archive {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.fragment {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  width: 400px;
+  text-align: center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.fragment:hover {
+  transform: scale(1.03);
+  background-color: rgba(0, 255, 195, 0.08);
+}
+
+.fragment img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  opacity: 0.85;
+  margin-bottom: 1rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+input[type="text"]::placeholder {
+  color: #777;
+}
+
+footer {
+  text-align: center;
+  color: #555;
+  font-size: 0.9rem;
+  padding: 2rem 1rem;
+}
