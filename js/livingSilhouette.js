@@ -3,8 +3,7 @@ const path = document.getElementById("silhouette-path");
 const buttons = document.querySelectorAll(".btn");
 const resetBtn = document.getElementById("reset");
 
-// Define visual transforms for each comment type.
-// These are CSS transform strings applied to the path; tweak values to taste.
+// Define visual transforms
 const transforms = {
   skinny: {
     transform: "translateX(-6px) scaleX(0.88) scaleY(0.98)",
@@ -28,8 +27,16 @@ const transforms = {
   },
 };
 
-// Apply a transform with a gentle 'pulse' effect and then hold it.
-// repeated clicks will re-apply the transform (restarting the transition).
+// Map each comment to its opposite effect
+const oppositeMap = {
+  skinny: "fat",
+  fat: "skinny",
+  curves: "ugly",
+  ugly: "curves",
+  toned: "ugly", // or pick whatever opposite you want
+};
+
+// Apply a transform
 function applyTransform(t) {
   path.style.transition =
     "transform 520ms cubic-bezier(.22,.9,.36,1), filter 380ms";
@@ -37,7 +44,7 @@ function applyTransform(t) {
   path.style.filter = t.filter || "none";
 }
 
-// simple function to clear transforms (reset)
+// Reset transform
 function resetTransform() {
   path.style.transition =
     "transform 540ms cubic-bezier(.22,.9,.36,1), filter 300ms";
@@ -45,11 +52,12 @@ function resetTransform() {
   path.style.filter = "none";
 }
 
-// wire up comment buttons
+// Wire up buttons to apply opposite transform
 buttons.forEach((btn) => {
   btn.addEventListener("click", () => {
     const key = btn.getAttribute("data-morph");
-    const t = transforms[key];
+    const oppositeKey = oppositeMap[key] || key; // fallback to itself
+    const t = transforms[oppositeKey];
     if (!t) return;
     applyTransform(t);
   });
