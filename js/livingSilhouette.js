@@ -1,39 +1,65 @@
-const pathEl = document.getElementById("silhouette-path");
-const input = document.getElementById("user-input");
+// Selectors
+const path = document.getElementById("silhouette-path");
+const buttons = document.querySelectorAll(".btn");
+const resetBtn = document.getElementById("reset");
 
-// Neutral & exaggerated silhouettes
-const neutralPath = "M736.728,849.786c-0.634-1.435-13.566-15.425-33.487-23.292c-4.568-1.94-4.545,2.705-16.944-34.925"; 
-const editedPath  = "M736.728,849.786 ..."; // slightly altered for exaggeration
+// Define visual transforms for each comment type.
+// These are CSS transform strings applied to the path; tweak values to taste.
+const transforms = {
+  skinny: {
+    transform: "translateX(-6px) scaleX(0.88) scaleY(0.98)",
+    filter: "brightness(0.98) contrast(1.02)",
+  },
+  curves: {
+    transform: "translateX(2px) scaleX(1.06) scaleY(1.04)",
+    filter: "brightness(1.02) contrast(1.03)",
+  },
+  ugly: {
+    transform: "translateY(-4px) skewX(2deg) scaleX(0.96)",
+    filter: "saturate(0.9)",
+  },
+  fat: {
+    transform: "translateX(4px) scaleX(1.14) scaleY(1.03)",
+    filter: "brightness(0.98)",
+  },
+  toned: {
+    transform: "translateY(0px) scaleX(0.98) scaleY(0.96)",
+    filter: "contrast(1.06)",
+  },
+};
 
+// Apply a transform with a gentle 'pulse' effect and then hold it.
+// repeated clicks will re-apply the transform (restarting the transition).
+function applyTransform(t) {
+  path.style.transition =
+    "transform 520ms cubic-bezier(.22,.9,.36,1), filter 380ms";
+  path.style.transform = t.transform;
+  path.style.filter = t.filter || "none";
+}
 
-let interpolator = flubber.interpolate(neutralPath, editedPath);
+// simple function to clear transforms (reset)
+function resetTransform() {
+  path.style.transition =
+    "transform 540ms cubic-bezier(.22,.9,.36,1), filter 300ms";
+  path.style.transform = "none";
+  path.style.filter = "none";
+}
 
-pathEl.setAttribute("d", neutralPath);
-
-input.addEventListener("input", () => {
-  let intensity = Math.min(1, 0.05); // adjust intensity as you type
-  pathEl.setAttribute("d", interpolator(intensity));
+// wire up comment buttons
+buttons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const key = btn.getAttribute("data-morph");
+    const t = transforms[key];
+    if (!t) return;
+    applyTransform(t);
+  });
 });
 
-// Slowly decay morph intensity
-setInterval(() => {
-  if (intensity > 0) {
-    intensity -= 0.01;
-    if (intensity < 0) intensity = 0;
-    pathEl.setAttribute("d", interpolator(intensity));
-  }
-}, 50);
+resetBtn.addEventListener("click", () => {
+  resetTransform();
+});
 
-// Switch body type on Enter
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    currentIndex = Math.floor(Math.random() * neutralPaths.length);
-    interpolator = flubber.interpolate(
-      neutralPaths[currentIndex],
-      editedPaths[currentIndex]
-    );
-    intensity = 0;
-    pathEl.setAttribute("d", neutralPaths[currentIndex]);
-    input.value = "";
-  }
+// Optional: keyboard shortcut R to reset
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "r") resetTransform();
 });

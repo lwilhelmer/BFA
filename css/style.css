@@ -1,37 +1,87 @@
-body {
-  background: radial-gradient(circle, #fafafa, #cfcfcf);
-  color: #222;
-  font-family: 'Inter', sans-serif;
-  text-align: center;
-  margin: 0;
-  overflow-x: hidden;
+:root{
+  --bg: #ffffff;
+  --text: #111;
+  --accent: #222;
+  --btn-bg: rgba(0,0,0,0.02);
 }
 
-header {
-  margin-top: 20px;
+*{box-sizing: border-box}
+body{
+  margin:0;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.portrait-container {
-  margin: 30px auto;
-  width: 300px;
-  height: 400px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid #222;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  background: #fff;
+.stage{
+  position: relative;
+  width: 760px;            /* overall layout width */
+  height: 920px;
+  display:block;
+  padding: 30px;
 }
 
-.input-box {
-  margin-top: 20px;
+/* SVG wrapper */
+.svg-wrap{
+  width: 420px;
+  height: 880px;
+  margin: 0 auto;
+  display: block;
 }
 
-input {
-  padding: 10px;
+/* make the svg fit nicely */
+#silhouette-svg{
+  width: 100%;
+  height: 100%;
+  display:block;
+}
+
+/* ensure the actual shape can be transformed smoothly */
+#silhouette-path{
+  transform-origin: 50% 50%;
+  transition: transform 600ms cubic-bezier(.22,.9,.36,1), filter 350ms;
+  will-change: transform, filter;
+  fill: #000; /* silhouette fill */
+  vector-effect: non-scaling-stroke;
+}
+
+/* Buttons/comments */
+.btn{
+  position:absolute;
+  background:var(--btn-bg);
+  border: none;
+  padding: 12px 18px;
+  font-size: 22px;
+  cursor: pointer;
+  border-radius: 12px;
+  color: var(--accent);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+}
+
+/* positions like your example */
+.top-left   { top: 28px; left: 20px; width: 320px; text-align:left; }
+.mid-left   { top: 260px; left: 12px; width: 280px; text-align:left; }
+.bottom-left{ top: 640px; left: 12px; width: 320px; text-align:left; }
+
+.top-right  { top: 28px; right: 20px; width: 260px; text-align:right; }
+.mid-right  { top: 360px; right: 20px; width: 280px; text-align:right; }
+
+.reset{
+  position:absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 14px;
   font-size: 16px;
   border-radius: 8px;
-  border: 1px solid #aaa;
-  width: 250px;
-  text-align: center;
-  outline: none;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
 }
+
+/* Hover microfeedback */
+.btn:hover{ transform: translateY(-4px); box-shadow: 0 8px 18px rgba(0,0,0,0.06); }
