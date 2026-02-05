@@ -1,0 +1,32 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fafafa;
+  font-family: Arial, sans-serif;
+}
+
+#post {
+  width: 400px;
+  background: white;
+  border: 1px solid #ddd;
+}
+
+#username {
+  padding: 10px;
+  font-weight: bold;
+}
+
+#canvas-container {
+  width: 400px;
+  height: 400px;
+}
+
+#commentInput {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-top: 1px solid #ddd;
+  outline: none;
+}
