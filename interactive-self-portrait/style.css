@@ -1,32 +1,185 @@
+/* Instagram-inspired animated gradient background */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: #fafafa;
-  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(
+    -45deg,
+    #f09433,
+    #e6683c,
+    #dc2743,
+    #cc2366,
+    #bc1888,
+    #8a3ab9,
+    #e6683c,
+    #f09433
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  overflow: hidden;
+  position: relative;
 }
 
+/* Floating particles for exhibition excitement */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(
+      circle at 20% 80%,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 255, 255, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 40%,
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 30%
+    );
+  animation: gradientShift 8s ease infinite reverse;
+  pointer-events: none;
+}
+
+/* Decorative floating shapes */
+.decorative-shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-1 {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #f09433, #dc2743);
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #bc1888, #8a3ab9);
+  top: 20%;
+  right: 15%;
+  animation-delay: 1s;
+}
+
+.shape-3 {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #e6683c, #f09433);
+  bottom: 15%;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+.shape-4 {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #8a3ab9, #bc1888);
+  bottom: 25%;
+  right: 10%;
+  animation-delay: 1.5s;
+}
+
+/* Instagram-style post container */
 #post {
   width: 400px;
   background: white;
-  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 0 80px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
 }
 
 #username {
-  padding: 10px;
-  font-weight: bold;
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #efefef;
+}
+
+#username::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(45deg, #f09433, #bc1888);
+  border-radius: 50%;
 }
 
 #canvas-container {
   width: 400px;
   height: 400px;
+  background: #fafafa;
 }
 
 #commentInput {
   width: 100%;
-  padding: 10px;
+  padding: 14px 16px;
   border: none;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #efefef;
   outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+#commentInput::placeholder {
+  color: #8e8e8e;
 }
