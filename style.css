@@ -207,6 +207,16 @@ body::before {
   animation: pulse 2s ease-in-out infinite;
 }
 
+#live-viewers {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  padding: 3px 8px;
+  background: #cc2366;
+  border-radius: 10px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
 #canvas-container {
   width: 400px;
   height: 400px;
@@ -309,4 +319,35 @@ body::before {
 .intensity-indicator.chaos {
   background: #9c27b0;
   animation: intenseGlitch 0.3s ease-in-out infinite;
+}
+
+/* Floating comments animation */
+@keyframes floatComment {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(var(--move-x, 10px), var(--move-y, -15px));
+  }
+  50% {
+    transform: translate(calc(var(--move-x, 10px) * -0.5), var(--move-y, 10px));
+  }
+  75% {
+    transform: translate(
+      calc(var(--move-x, 10px) * -1),
+      calc(var(--move-y, -15px) * 0.5)
+    );
+  }
+}
+
+.floating-comment {
+  transition:
+    transform 0.2s,
+    background 0.2s;
+  pointer-events: auto;
+}
+
+.floating-comment:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

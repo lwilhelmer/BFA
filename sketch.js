@@ -22,7 +22,7 @@ let maxSoundLayers = 8;
 // Floating comments array
 let floatingComments = [];
 let commentSpawnRate = 0;
-let maxComments = 25;
+let maxComments = 80;
 
 // Body distortion effects
 let pixelDistortion = 0;
@@ -31,10 +31,15 @@ let noiseAmount = 0;
 let bodyGlitchOffset = { x: 0, y: 0 };
 let permanentDistortions = [];
 
-// Thresholds
-const GLITCH_THRESHOLD = 15;
-const DISTORTION_THRESHOLD = 25;
-const CHAOS_THRESHOLD = 40;
+// Thresholds based on click count
+// 0-10 clicks → subtle changes
+// 10-20 clicks → more extreme
+// 20-30 clicks → chaotic
+// 30+ clicks → glitch / breakdown
+const SUBTLE_MAX = 10;
+const EXTREME_THRESHOLD = 10; // more extreme starts
+const CHAOS_THRESHOLD = 20; // chaotic starts
+const BREAKDOWN_THRESHOLD = 30; // glitch/breakdown starts
 
 // Sentiment keywords for detection
 const negativeWords = [
@@ -117,6 +122,7 @@ function preload() {
 }
 
 function setup() {
+  // Canvas for body - sits inside Instagram post
   let canvas = createCanvas(400, 400);
   canvas.parent("canvas-container");
 
@@ -128,7 +134,7 @@ function setup() {
   // Initialize audio context
   initAudio();
 
-  // Initialize floating comments
+  // Create floating comment DOM elements
   initializeFloatingComments();
 
   // Initialize watching eyes
@@ -164,7 +170,7 @@ function playNotificationSound() {
   gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(
     0.01,
-    audioContext.currentTime + 0.1
+    audioContext.currentTime + 0.1,
   );
 
   oscillator.start(audioContext.currentTime);
@@ -178,7 +184,7 @@ function playWhisperSound() {
   const noiseBuffer = audioContext.createBuffer(
     1,
     bufferSize,
-    audioContext.sampleRate
+    audioContext.sampleRate,
   );
   const output = noiseBuffer.getChannelData(0);
 
@@ -197,7 +203,7 @@ function playWhisperSound() {
   gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(
     0.001,
-    audioContext.currentTime + 0.3
+    audioContext.currentTime + 0.3,
   );
 
   whiteNoise.connect(filter);
@@ -224,37 +230,92 @@ function initializeWatchingEyes() {
 }
 
 function initializeFloatingComments() {
-  // Create floating comments positioned around the canvas
-  const positions = [
-    { x: 20, y: 80 },
-    { x: 320, y: 100 },
-    { x: 50, y: 200 },
-    { x: 340, y: 220 },
-    { x: 30, y: 300 },
-    { x: 350, y: 320 },
-    { x: 150, y: 60 },
-    { x: 280, y: 70 },
-  ];
-
-  // Shuffle and pick sample comments
+  // Create floating comment DOM elements that float around the entire page
+  // Position them absolutely on the page, outside the post
   let shuffledComments = [...sampleComments].sort(() => Math.random() - 0.5);
 
-  positions.forEach((pos, i) => {
-    if (shuffledComments[i]) {
-      floatingComments.push({
-        text: shuffledComments[i].text,
-        sentiment: shuffledComments[i].sentiment,
-        x: pos.x,
-        y: pos.y,
-        originalY: pos.y,
-        offset: random(1000),
-        hovered: false,
-        applied: false,
-        fadeOut: 0,
-        spawned: false,
-      });
+  for (let i = 0; i < 30; i++) {
+    createFloatingCommentElement(
+      shuffledComments[i % shuffledComments.length].text,
+      shuffledComments[i % shuffledComments.length].sentiment,
+      random(20, window.innerWidth - 150),
+      random(50, window.innerHeight - 50),
+      random(1000),
+      false,
+    );
+  }
+}
+
+function createFloatingCommentElement(text, sentiment, x, y, offset, spawned) {
+  let div = document.createElement("div");
+  div.className = "floating-comment";
+  div.textContent = text;
+  div.style.cssText = `
+    position: fixed;
+    left: ${x}px;
+    top: ${y}px;
+    padding: 6px 12px;
+    background: ${sentiment === 1 ? "rgba(200, 255, 200, 0.85)" : "rgba(255, 220, 220, 0.85)"};
+    border: 1px solid ${sentiment === 1 ? "rgb(100, 200, 100)" : "rgb(200, 100, 100)"};
+    border-radius: 16px;
+    font-size: 13px;
+    color: ${sentiment === 1 ? "rgb(50, 100, 50)" : "rgb(100, 50, 50)"};
+    cursor: pointer;
+    z-index: 1000;
+    animation: floatComment ${8 + Math.random() * 4}s ease-in-out infinite;
+    animation-delay: -${offset / 100}s;
+    transform-origin: center;
+  `;
+
+  // Random movement variation
+  let moveX = (Math.random() - 0.5) * 30;
+  let moveY = (Math.random() - 0.5) * 20;
+  div.style.setProperty("--move-x", `${moveX}px`);
+  div.style.setProperty("--move-y", `${moveY}px`);
+
+  let commentData = {
+    element: div,
+    text: text,
+    sentiment: sentiment,
+    hovered: false,
+    applied: false,
+    offset: offset,
+    spawned: spawned,
+  };
+
+  div.addEventListener("mouseenter", () => {
+    commentData.hovered = true;
+    div.style.transform = "scale(1.15)";
+    div.style.background =
+      sentiment === 1
+        ? "rgba(144, 238, 144, 0.95)"
+        : "rgba(255, 180, 180, 0.95)";
+  });
+
+  div.addEventListener("mouseleave", () => {
+    commentData.hovered = false;
+    div.style.transform = "scale(1)";
+    div.style.background =
+      sentiment === 1
+        ? "rgba(200, 255, 200, 0.85)"
+        : "rgba(255, 220, 220, 0.85)";
+  });
+
+  div.addEventListener("click", () => {
+    if (!commentData.applied) {
+      applyCommentEffect(commentData);
+      incrementInteraction();
+      // Make element fade and remove
+      div.style.transition = "opacity 0.5s, transform 0.5s";
+      div.style.opacity = "0";
+      div.style.transform = "scale(0.8)";
+      setTimeout(() => div.remove(), 500);
+      commentData.applied = true;
     }
   });
+
+  document.body.appendChild(div);
+  floatingComments.push(commentData);
 }
 
 function handleCanvasClick() {
@@ -291,7 +352,7 @@ function applyCommentEffect(comment) {
     // Neutral comment
     targetScale = Math.max(
       0.7,
-      Math.min(1.4, targetScale + random(-0.05, 0.05))
+      Math.min(1.4, targetScale + random(-0.05, 0.05)),
     );
     addPermanentDistortion(0);
   }
@@ -324,34 +385,52 @@ function incrementInteraction() {
   interactionCount++;
   totalInteractions++;
 
-  // Update distortion and glitch levels
-  distortionLevel = map(
-    interactionCount,
-    0,
-    DISTORTION_THRESHOLD,
-    0,
-    1,
-    true
-  );
+  // Update distortion level based on click ranges
+  // 0-10: subtle (0-0.5)
+  // 10-20: more extreme (0.5-0.8)
+  // 20-30: chaotic (0.8-1.0)
+  // 30+: breakdown (1.0)
+  if (interactionCount <= SUBTLE_MAX) {
+    distortionLevel = map(interactionCount, 0, SUBTLE_MAX, 0, 0.5, true);
+  } else if (interactionCount <= EXTREME_THRESHOLD * 2) {
+    distortionLevel = map(
+      interactionCount,
+      SUBTLE_MAX,
+      EXTREME_THRESHOLD * 2,
+      0.5,
+      0.8,
+      true,
+    );
+  } else if (interactionCount < BREAKDOWN_THRESHOLD) {
+    distortionLevel = map(
+      interactionCount,
+      EXTREME_THRESHOLD * 2,
+      BREAKDOWN_THRESHOLD,
+      0.8,
+      1.0,
+      true,
+    );
+  } else {
+    distortionLevel = 1.0;
+  }
+
+  // Glitch intensity triggers at 30+ clicks
   glitchIntensity = map(
     interactionCount,
-    GLITCH_THRESHOLD,
-    CHAOS_THRESHOLD,
+    BREAKDOWN_THRESHOLD,
+    BREAKDOWN_THRESHOLD + 10,
     0,
     1,
-    true
+    true,
   );
 
-  // Spawn additional comments as interactions increase
-  if (interactionCount > 5 && floatingComments.length < maxComments) {
+  // Spawn 2 new comments on each click
+  for (let i = 0; i < 2 && floatingComments.length < maxComments; i++) {
     spawnRandomComment();
   }
 
   // Add more watching eyes
-  if (
-    interactionCount % 3 === 0 &&
-    watchingEyes.length < maxEyes
-  ) {
+  if (interactionCount % 3 === 0 && watchingEyes.length < maxEyes) {
     addWatchingEye();
   }
 
@@ -365,20 +444,17 @@ function incrementInteraction() {
 }
 
 function spawnRandomComment() {
+  // Spawn new floating comment as DOM element
   const randomComment =
     sampleComments[Math.floor(Math.random() * sampleComments.length)];
-  floatingComments.push({
-    text: randomComment.text,
-    sentiment: randomComment.sentiment,
-    x: random(30, 370),
-    y: random(50, 350),
-    originalY: random(50, 350),
-    offset: random(1000),
-    hovered: false,
-    applied: false,
-    fadeOut: 0,
-    spawned: true,
-  });
+  createFloatingCommentElement(
+    randomComment.text,
+    randomComment.sentiment,
+    random(20, window.innerWidth - 150),
+    random(50, window.innerHeight - 50),
+    random(1000),
+    true,
+  );
 }
 
 function addWatchingEye() {
@@ -389,7 +465,7 @@ function addWatchingEye() {
     pupilSize: random(5, 10),
     blinkTimer: random(60, 180),
     isBlinking: false,
-    opacity: map(interactionCount, 0, CHAOS_THRESHOLD, 0.4, 0.9),
+    opacity: map(interactionCount, 0, BREAKDOWN_THRESHOLD, 0.4, 0.9),
   });
 }
 
@@ -397,7 +473,22 @@ function updateInteractionDisplay() {
   const display = document.getElementById("interaction-display");
   if (display) {
     display.textContent = `👁️ ${interactionCount} interactions`;
-    display.style.opacity = map(interactionCount, 0, 10, 0.3, 1, true);
+    // Opacity increases as clicks progress through stages
+    display.style.opacity = map(
+      interactionCount,
+      0,
+      SUBTLE_MAX + EXTREME_THRESHOLD + CHAOS_THRESHOLD,
+      0.3,
+      1,
+      true,
+    );
+  }
+
+  // Update live viewer count based on watching eyes
+  const liveDisplay = document.getElementById("live-viewers");
+  if (liveDisplay) {
+    let viewerCount = watchingEyes.length * 137 + 1;
+    liveDisplay.textContent = `LIVE • ${viewerCount.toLocaleString()}`;
   }
 }
 
@@ -431,15 +522,16 @@ function draw() {
   // Smoothly interpolate body scale
   bodyScale = lerp(bodyScale, targetScale, 0.08);
 
-  // Apply glitch effects at threshold
-  if (interactionCount >= GLITCH_THRESHOLD) {
+  // Apply glitch effects at breakdown threshold (30+ clicks)
+  if (interactionCount >= BREAKDOWN_THRESHOLD) {
     applyGlitchEffects();
   }
 
-  // Draw watching eyes (behind body)
+  // Watching eyes drawn behind body
   drawWatchingEyes();
 
   push();
+  // Center the body where the Instagram post is
   translate(width / 2, height / 2);
 
   // Apply cumulative distortions
@@ -458,9 +550,6 @@ function draw() {
   // Draw permanent distortion effects
   drawPermanentDistortions();
 
-  // Update and draw floating comments
-  drawFloatingComments();
-
   // Draw interaction intensity overlay
   drawIntensityOverlay();
 
@@ -469,7 +558,7 @@ function draw() {
   noStroke();
   textSize(11);
   textAlign(CENTER);
-  text("Click floating comments to see their effect!", width / 2, 25);
+  text("Click floating comments around the page!", width / 2, 25);
 }
 
 function applyGlitchEffects() {
@@ -506,23 +595,23 @@ function applyCumulativeDistortions() {
   // Apply glitch offset
   translate(bodyGlitchOffset.x, bodyGlitchOffset.y);
 
-  // Apply rotation distortion at high levels
-  if (interactionCount > DISTORTION_THRESHOLD) {
+  // Apply rotation distortion at chaotic levels (20+ clicks)
+  if (interactionCount > CHAOS_THRESHOLD) {
     const rotationAmount = map(
       interactionCount,
-      DISTORTION_THRESHOLD,
       CHAOS_THRESHOLD,
+      BREAKDOWN_THRESHOLD,
       0,
       0.1,
-      true
+      true,
     );
     rotate(sin(frameCount * 0.1) * rotationAmount);
   }
 }
 
 function drawDistortedBody() {
-  // At chaos threshold, draw completely distorted body
-  if (interactionCount >= CHAOS_THRESHOLD) {
+  // At breakdown threshold (30+ clicks), draw completely glitched body
+  if (interactionCount >= BREAKDOWN_THRESHOLD) {
     drawChaosBody();
     return;
   }
@@ -533,14 +622,7 @@ function drawDistortedBody() {
     const img = silhouetteImg.get();
     img.loadPixels();
 
-    const distortionStrength = map(
-      distortionLevel,
-      0.3,
-      1,
-      0,
-      20,
-      true
-    );
+    const distortionStrength = map(distortionLevel, 0.3, 1, 0, 20, true);
 
     for (let i = 0; i < img.pixels.length; i += 4) {
       if (random() < distortionStrength * 0.1) {
@@ -548,17 +630,17 @@ function drawDistortedBody() {
         img.pixels[i] = constrain(
           img.pixels[i] + random(-50, 50) * distortionLevel,
           0,
-          255
+          255,
         );
         img.pixels[i + 1] = constrain(
           img.pixels[i + 1] + random(-50, 50) * distortionLevel,
           0,
-          255
+          255,
         );
         img.pixels[i + 2] = constrain(
           img.pixels[i + 2] + random(-50, 50) * distortionLevel,
           0,
-          255
+          255,
         );
       }
     }
@@ -571,14 +653,14 @@ function drawDistortedBody() {
 }
 
 function drawChaosBody() {
-  // Completely distorted, unrecognizable body
+  // Completely glitched/breakdown body at 30+ clicks
   const chaosLevel = map(
     interactionCount,
-    CHAOS_THRESHOLD,
-    CHAOS_THRESHOLD + 20,
+    BREAKDOWN_THRESHOLD,
+    BREAKDOWN_THRESHOLD + 20,
     1,
     2,
-    true
+    true,
   );
 
   // Draw fragmented pieces of the body
@@ -593,7 +675,7 @@ function drawChaosBody() {
       random(150, 255),
       random(150, 255),
       random(150, 255),
-      random(100, 200)
+      random(100, 200),
     );
 
     image(silhouetteImg, 0, 0);
@@ -688,10 +770,15 @@ function drawFloatingComments() {
   let mouseY_ = mouseY;
 
   for (let comment of floatingComments) {
-    // Floating animation
+    // Organic floating animation - more random movement
     if (!comment.applied) {
+      // Multiple layered movements for organic feel
       comment.y =
-        comment.originalY + sin((frameCount + comment.offset) * 0.03) * 8;
+        comment.originalY +
+        sin((frameCount + comment.offset) * 0.02) * 10 +
+        cos((frameCount + comment.offset * 0.7) * 0.015) * 5;
+      // Slight horizontal drift too
+      comment.x = comment.x + random(-0.3, 0.3);
     }
 
     // Check if mouse is over comment
@@ -702,100 +789,77 @@ function drawFloatingComments() {
       mouseY_ > comment.y - 12 &&
       mouseY_ < comment.y + 4;
 
-    // Draw comment background
+    // Draw comment - organic floating text, no boxes
     if (comment.applied) {
       // Fade out applied comments
       comment.fadeOut -= 0.02;
       if (comment.fadeOut <= 0) continue;
 
       push();
-      fill(150, 150, 150, comment.fadeOut * 255);
+      // Ghostly fading text
+      fill(80, 80, 80, comment.fadeOut * 200);
       noStroke();
-      rect(comment.x - 5, comment.y - 14, textWidth_ + 10, 18, 4);
-
-      fill(100, 100, 100, comment.fadeOut * 255);
-      textSize(11);
+      textSize(13);
       textAlign(LEFT, CENTER);
       text(comment.text, comment.x, comment.y);
       pop();
     } else {
-      // Draw comment based on sentiment
-      let bgColor;
-      if (comment.sentiment === 1) {
-        // Positive - pink/green
-        bgColor = comment.hovered ? color(144, 238, 144) : color(200, 255, 200);
-      } else {
-        // Negative - red/orange
-        bgColor = comment.hovered ? color(255, 180, 180) : color(255, 220, 220);
+      // Floating text that glows on hover - no boxes
+      push();
+      if (comment.hovered) {
+        // Hover glow effect
+        let glowSize = 15;
+        for (let i = 3; i > 0; i--) {
+          fill(
+            comment.sentiment === 1
+              ? color(100, 200, 100, 20 * i)
+              : color(200, 100, 100, 20 * i),
+          );
+          noStroke();
+          textSize(13 + i * 2);
+          text(comment.text, comment.x, comment.y);
+        }
       }
 
-      push();
-      // Hover effect - slightly larger
-      let scaleAmount = comment.hovered ? 1.1 : 1.0;
-      translate(comment.x + textWidth_ / 2, comment.y);
-      scale(scaleAmount);
-      translate(-(comment.x + textWidth_ / 2), -comment.y);
-
-      fill(bgColor);
-      stroke(
-        comment.sentiment === 1 ? color(100, 200, 100) : color(200, 100, 100)
-      );
-      strokeWeight(1);
-      rect(comment.x - 5, comment.y - 14, textWidth_ + 10, 18, 4);
-
-      // Draw text
-      fill(comment.sentiment === 1 ? color(50, 150, 50) : color(150, 50, 50));
+      // Main text
+      fill(comment.sentiment === 1 ? color(60, 100, 60) : color(100, 50, 50));
       noStroke();
-      textSize(11);
+      textSize(13);
       textAlign(LEFT, CENTER);
       text(comment.text, comment.x, comment.y);
       pop();
-
-      // Draw pointer line to body center
-      if (comment.hovered) {
-        push();
-        stroke(
-          comment.sentiment === 1
-            ? color(100, 200, 100, 150)
-            : color(200, 100, 100, 150)
-        );
-        strokeWeight(2);
-        let startX =
-          comment.x + (comment.sentiment === 1 ? textWidth_ + 5 : -5);
-        let startY = comment.y - 5;
-        let endX = width / 2;
-        let endY = height / 2;
-        line(startX, startY, endX, endY);
-        pop();
-      }
     }
   }
 }
 
 function drawIntensityOverlay() {
-  // Visual feedback for interaction intensity
+  // Visual feedback for interaction intensity based on click ranges
+  // 0-10: subtle changes
+  // 10-20: more extreme
+  // 20-30: chaotic
+  // 30+: glitch/breakdown
   if (interactionCount > 0) {
     // Vignette effect that intensifies
     const vignetteIntensity = map(
       interactionCount,
       0,
-      CHAOS_THRESHOLD,
+      BREAKDOWN_THRESHOLD,
       0,
       150,
-      true
+      true,
     );
     drawingContext.shadowBlur = vignetteIntensity;
     drawingContext.shadowColor = `rgba(0, 0, 0, ${map(
       interactionCount,
       0,
-      CHAOS_THRESHOLD,
+      BREAKDOWN_THRESHOLD,
       0,
       0.5,
-      true
+      true,
     )})`;
 
-    // Scan lines at high interaction
-    if (interactionCount > 10) {
+    // Subtle scan lines appear at extreme level (10+ clicks)
+    if (interactionCount > EXTREME_THRESHOLD) {
       stroke(0, 0, 0, 20);
       strokeWeight(1);
       for (let y = 0; y < height; y += 4) {
@@ -803,12 +867,32 @@ function drawIntensityOverlay() {
       }
     }
 
-    // Static noise at very high interaction
-    if (interactionCount > 20) {
+    // Static noise at chaotic level (20+ clicks)
+    if (interactionCount > CHAOS_THRESHOLD) {
       noStroke();
       for (let i = 0; i < interactionCount * 2; i++) {
         fill(random(255), random(255), random(255), random(10, 30));
         rect(random(width), random(height), random(1, 3), random(1, 3));
+      }
+    }
+
+    // Glitch artifacts at breakdown level (30+ clicks)
+    if (interactionCount >= BREAKDOWN_THRESHOLD) {
+      noStroke();
+      // Horizontal glitch lines
+      for (let i = 0; i < 5; i++) {
+        fill(random(255), random(100), random(100), random(50, 150));
+        rect(0, random(height), width, random(1, 4));
+      }
+      // Random colored pixels
+      for (let i = 0; i < 20; i++) {
+        fill(
+          random([0, 255]),
+          random([0, 255]),
+          random([0, 255]),
+          random(100, 255),
+        );
+        rect(random(width), random(height), random(2, 10), random(2, 10));
       }
     }
   }
@@ -839,7 +923,7 @@ document
         // Neutral comment - slight random change
         targetScale = Math.max(
           0.7,
-          Math.min(1.4, targetScale + random(-0.05, 0.05))
+          Math.min(1.4, targetScale + random(-0.05, 0.05)),
         );
         addPermanentDistortion(0);
       }
