@@ -579,7 +579,7 @@ function draw() {
   noStroke();
   textSize(11);
   textAlign(CENTER);
-  text("Click floating comments around the page!", width / 2, 25);
+  text("click the comments", width / 2, 25);
 }
 
 function applyGlitchEffects() {
