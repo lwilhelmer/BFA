@@ -250,21 +250,42 @@ function createFloatingCommentElement(text, sentiment, x, y, offset, spawned) {
   let div = document.createElement("div");
   div.className = "floating-comment";
   div.textContent = text;
+
+  // Random size - some big, some small
+  let sizeRandom = Math.random();
+  let fontSize;
+  if (sizeRandom > 0.8) {
+    fontSize = Math.floor(random(18, 28)); // BIG
+  } else if (sizeRandom > 0.5) {
+    fontSize = Math.floor(random(14, 18)); // medium
+  } else {
+    fontSize = Math.floor(random(11, 14)); // small
+  }
+
+  // Random opacity
+  let opacity = random(0.6, 1);
+
+  // Random blur on some (30% chance)
+  let blur =
+    Math.random() > 0.7 ? `blur(${Math.floor(random(1, 3))}px)` : "none";
+
   div.style.cssText = `
     position: fixed;
     left: ${x}px;
     top: ${y}px;
-    padding: 6px 12px;
-    background: ${sentiment === 1 ? "rgba(200, 255, 200, 0.85)" : "rgba(255, 220, 220, 0.85)"};
+    padding: ${Math.floor(fontSize * 0.4)}px ${Math.floor(fontSize * 0.8)}px;
+    background: ${sentiment === 1 ? "rgba(200, 255, 200, " + opacity * 0.85 + ")" : "rgba(255, 220, 220, " + opacity * 0.85 + ")"};
     border: 1px solid ${sentiment === 1 ? "rgb(100, 200, 100)" : "rgb(200, 100, 100)"};
-    border-radius: 16px;
-    font-size: 13px;
+    border-radius: ${Math.floor(fontSize * 1.2)}px;
+    font-size: ${fontSize}px;
     color: ${sentiment === 1 ? "rgb(50, 100, 50)" : "rgb(100, 50, 50)"};
     cursor: pointer;
     z-index: 1000;
     animation: floatComment ${8 + Math.random() * 4}s ease-in-out infinite;
     animation-delay: -${offset / 100}s;
     transform-origin: center;
+    filter: ${blur};
+    opacity: ${opacity};
   `;
 
   // Random movement variation
