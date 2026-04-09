@@ -177,10 +177,10 @@ body::before {
 }
 
 /* Mobile responsive */
-@media (max-width: 500px) {
+@media (max-width: 668px) {
   #post {
     width: 80%;
-    max-width: 80%;
+    max-width: none;
   }
 
   #canvas-container {
