@@ -147,6 +147,16 @@ function setup() {
   updateInteractionDisplay();
 }
 
+// Handle window resize for mobile responsiveness
+function windowResized() {
+  // Get the canvas container width
+  let container = document.getElementById('canvas-container');
+  if (container) {
+    let containerWidth = container.offsetWidth;
+    resizeCanvas(containerWidth, containerWidth);
+  }
+}
+
 function initAudio() {
   try {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
