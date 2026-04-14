@@ -584,6 +584,15 @@ function draw() {
   // Draw interaction intensity overlay
   drawIntensityOverlay();
 
+  // Show "again?" button at 30+ clicks
+  if (interactionCount >= BREAKDOWN_THRESHOLD) {
+    const btn = document.getElementById('again-btn');
+    if (btn) {
+      btn.classList.add('visible');
+      btn.onclick = () => location.reload();
+    }
+  }
+
   // Instructions
   fill(120);
   noStroke();

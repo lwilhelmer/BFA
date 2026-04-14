@@ -396,3 +396,33 @@ body::before {
 .floating-comment:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+#again-btn {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  background: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #cc2366;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+#again-btn:hover {
+  transform: translateX(-50%) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+#again-btn.visible {
+  opacity: 1;
+  visibility: visible;
+}
