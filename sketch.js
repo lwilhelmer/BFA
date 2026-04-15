@@ -14,6 +14,8 @@ let maxEyes = 15;
 
 // Sound system
 let audioContext;
+let voiceAudio;
+let voiceAudioElement = null;
 let notificationSounds = [];
 let whisperSounds = [];
 let soundLayerCount = 0;
@@ -119,6 +121,11 @@ const sampleComments = [
 function preload() {
   // Load the silhouette PNG image
   silhouetteImg = loadImage("Silhouette.png");
+  // Load voice audio using HTML audio element for better compatibility
+  voiceAudioElement = new Audio("voice.mp3");
+  voiceAudioElement.preload = "auto";
+  voiceAudioElement.volume = 0.5;
+  console.log("Voice audio element created");
 }
 
 function setup() {
@@ -133,6 +140,17 @@ function setup() {
 
   // Initialize audio context
   initAudio();
+  
+  // Enable audio on first user interaction (required by browsers)
+  document.body.addEventListener('click', function enableAudio() {
+    if (voiceAudioElement) {
+      voiceAudioElement.play().then(() => {
+        voiceAudioElement.pause();
+        console.log("Audio enabled");
+      }).catch(e => console.log("Audio enable error:", e));
+    }
+    document.body.removeEventListener('click', enableAudio);
+  }, { once: true });
 
   // Create floating comment DOM elements
   initializeFloatingComments();
@@ -188,40 +206,35 @@ function playNotificationSound() {
 }
 
 function playWhisperSound() {
-  if (!audioContext) return;
+  if (!voiceAudioElement) return;
+  
+  console.log("Playing whisper, interactionCount:", interactionCount);
+  
+  // Clone the audio to allow overlapping plays
+  const audioClone = voiceAudioElement.cloneNode();
+  const volume = map(interactionCount, 5, 30, 0.3, 0.8, true);
+  audioClone.volume = volume;
+  audioClone.play().catch(e => console.log("Play error:", e));
+}
 
-  const bufferSize = 2 * audioContext.sampleRate;
-  const noiseBuffer = audioContext.createBuffer(
-    1,
-    bufferSize,
-    audioContext.sampleRate,
-  );
-  const output = noiseBuffer.getChannelData(0);
+let lastWhisperTime = 0;
+let whisperInterval = 10000;
 
-  for (let i = 0; i < bufferSize; i++) {
-    output[i] = Math.random() * 2 - 1;
+function updateVoiceAudio() {
+  if (!voiceAudioElement) {
+    console.log("voiceAudioElement not loaded");
+    return;
   }
-
-  const whiteNoise = audioContext.createBufferSource();
-  whiteNoise.buffer = noiseBuffer;
-
-  const filter = audioContext.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 500 + Math.random() * 300;
-
-  const gainNode = audioContext.createGain();
-  gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(
-    0.001,
-    audioContext.currentTime + 0.3,
-  );
-
-  whiteNoise.connect(filter);
-  filter.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-
-  whiteNoise.start(audioContext.currentTime);
-  whiteNoise.stop(audioContext.currentTime + 0.3);
+  
+  if (interactionCount < 5) return;
+  
+  whisperInterval = map(interactionCount, 5, 30, 8000, 2000, true);
+  
+  if (millis() - lastWhisperTime > whisperInterval) {
+    console.log("Triggering whisper sound, interval:", whisperInterval);
+    playWhisperSound();
+    lastWhisperTime = millis();
+  }
 }
 
 function initializeWatchingEyes() {
@@ -552,6 +565,9 @@ function draw() {
 
   // Smoothly interpolate body scale
   bodyScale = lerp(bodyScale, targetScale, 0.08);
+
+  // Update voice audio based on interactions
+  updateVoiceAudio();
 
   // Apply glitch effects at breakdown threshold (30+ clicks)
   if (interactionCount >= BREAKDOWN_THRESHOLD) {
